@@ -8,114 +8,75 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+	message = FALSE,
+	warning = FALSE)
 ```
 
+# Abstract
 
+This report aims to examine the relationship between car sales and the economic attributes and traits of cars of interest to consumers or which factors primarily influence consumers' car purchase choices. To achieve the purpose of this study, I designed and built a multi-level model based on different major automobile brands or specific models as categories, and with corresponding exploratory data analysis to figure out the factors that can have a significant impact on consumers' choice of car purchase.
 
+# Introduction
 
+## Background
 
+The automobile, the only high-tech product in the world today with tens of thousands of parts, tens of millions of annual production, and hundreds of millions of ownership, has become one of the most important modes of human transportation since its birth in 1886. In 2007, there were 800 million cars or light trucks on the road, consuming 9.8 trillion liters of fuel annually. It can be considered that cars, which can carry several people at the same time depending on the specific model, are a good choice for family travel. The overall structure of different cars may be roughly the same, but the use and manufacturing details may vary significantly from one brand of car product to another or from one model to another under the same brand. For the general public, there are several factors that may be decisive in determining exactly which model they purchase, it may be fuel efficiency, car price, motor power, etc. The purpose of this report is to examine which factors are most influential when it comes to consumer choice in purchasing a car.
 
+Throughout the ages, taking into account the interaction of various factors and the development of the times, the car brand is still the main factor affecting consumers' choice of car. A comprehensive consideration of all factors, whether from the vehicle's cost performance, price and market performance, the brand factor is an important reason for its impact on consumers to choose a car. As a result, this report will use either the manufacturer's brand of the car or a specific special model as the categorical level to conduct an in-depth analysis to investigate the the physical attributes or economic attributes of the model itself will have an impact on its sales for different car brands.
 
+## Data Summary
 
+The data set i fould on Kaggle is 'Car sales'(URL:<https://www.kaggle.com/datasets/gagandeep16/car-sales>), published by Kaggle User GAGANBHATIA. For confidentiality reasons, the exact year of provenance of the sales data is not included, but it does not affect our study of the relationship between factors and sales. A csv file was provided which includes 16 columns of variables with 157 rows of data. Amount the variables, 3 of them are categorical variables which refers to bands and models, and 13 numeric variables covers both physical and economic/energy attributes of the car. This report is only concerned with some of these relatively representative and important variables. In order to make the model concise, some of them will be removed in the data cleaning section and will not be shown in the summary table. The table of columns with brief explanation is listed below:
 
+| Column Names       | Explanation                                                                        |
+|--------------------|------------------------------------------------------------------------------------|
+| Manufacturer       | Name of the car manufacturer                                                       |
+| Model              | Name of the specific model of the car                                              |
+| Sales_in_thousands | Sales of cars, in thousands                                                        |
+| Vehicle_type       | Passenger-carrying properties of automobiles                                       |
+| Price_in_thousands | The selling price of the car, in thousands                                         |
+| Engine_size        | The total volume of the cylinders in the engine                                    |
+| Horsepower         | The power an engine produces                                                       |
+| Wheelbase          | The distance between the centres of the front and rear wheels                      |
+| Width              | Vehicle width measurement                                                          |
+| Length             | Vehicle Length measurement                                                         |
+| Curb_weight        | The weight of the vehicle including a full tank of fuel and all standard equipment |
+| Fuel_capacity      | The amount of fuel that a vehicles fuel tank can hold                              |
+| Fuel_efficiency    | The distance a motor vehicle can travel on a single gallon of gas                  |
 
+# Method
 
+# Result
 
+# Discussion
 
+## Test
 
+```{r}
+library(readr)
+library(dplyr)
+```
 
+```{r}
 
+car_row <- read_csv("Car_sales.csv")
 
+car = select(car_row, -4, -15:-16)
+car <- na.omit(car)
 
+```
 
+```{r}
 
+# Convert categorical variables to factors
 
+car$Manufacturer <- as.factor(car$Manufacturer)
+car$Model <- as.factor(car$Model)
+car$Vehicle_type <- as.factor(car$Vehicle_type)
+```
 
+```{r}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
