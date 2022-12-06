@@ -30,21 +30,35 @@ Throughout the ages, taking into account the interaction of various factors and 
 
 The data set i fould on Kaggle is 'Car sales'(URL:<https://www.kaggle.com/datasets/gagandeep16/car-sales>), published by Kaggle User GAGANBHATIA. For confidentiality reasons, the exact year of provenance of the sales data is not included, but it does not affect our study of the relationship between factors and sales. A csv file was provided which includes 16 columns of variables with 157 rows of data. Amount the variables, 3 of them are categorical variables which refers to bands and models, and 13 numeric variables covers both physical and economic/energy attributes of the car. This report is only concerned with some of these relatively representative and important variables. In order to make the model concise, some of them will be removed in the data cleaning section and will not be shown in the summary table. The table of columns with brief explanation is listed below:
 
++--------------------+------------------------------------------------------------------------------------+
 | Column Names       | Explanation                                                                        |
-|--------------------|------------------------------------------------------------------------------------|
++====================+====================================================================================+
 | Manufacturer       | Name of the car manufacturer                                                       |
++--------------------+------------------------------------------------------------------------------------+
 | Model              | Name of the specific model of the car                                              |
++--------------------+------------------------------------------------------------------------------------+
 | Sales_in_thousands | Sales of cars, in thousands                                                        |
++--------------------+------------------------------------------------------------------------------------+
 | Vehicle_type       | Passenger-carrying properties of automobiles                                       |
++--------------------+------------------------------------------------------------------------------------+
 | Price_in_thousands | The selling price of the car, in thousands                                         |
++--------------------+------------------------------------------------------------------------------------+
 | Engine_size        | The total volume of the cylinders in the engine                                    |
++--------------------+------------------------------------------------------------------------------------+
 | Horsepower         | The power an engine produces                                                       |
++--------------------+------------------------------------------------------------------------------------+
 | Wheelbase          | The distance between the centres of the front and rear wheels                      |
++--------------------+------------------------------------------------------------------------------------+
 | Width              | Vehicle width measurement                                                          |
++--------------------+------------------------------------------------------------------------------------+
 | Length             | Vehicle Length measurement                                                         |
++--------------------+------------------------------------------------------------------------------------+
 | Curb_weight        | The weight of the vehicle including a full tank of fuel and all standard equipment |
++--------------------+------------------------------------------------------------------------------------+
 | Fuel_capacity      | The amount of fuel that a vehicles fuel tank can hold                              |
++--------------------+------------------------------------------------------------------------------------+
 | Fuel_efficiency    | The distance a motor vehicle can travel on a single gallon of gas                  |
++--------------------+------------------------------------------------------------------------------------+
 
 # Method
 
@@ -79,4 +93,108 @@ car$Vehicle_type <- as.factor(car$Vehicle_type)
 
 ```{r}
 
+library(lme4)
+library(Matrix)
+fit1 <- lmer(Sales_in_thousands ~ Price_in_thousands +  + (1 | Manufacturer),data = car)
+fit1
+
 ```
+```{r}
+coef(fit1)
+summary(fit1)
+
+Anova(fit1)
+```
+
+
+
+
+```{r}
+coef(fit1)$Manufacturer
+```
+
+
+```{r}
+plot(fit1)
+```
+```{r}
+prediction <- predict(fit1)
+plot(x = Price_in_thousands,y = Sales_in_thousands, color = Manufacturer,prediction, group = Manufacturer,y = prediction,data = car)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
