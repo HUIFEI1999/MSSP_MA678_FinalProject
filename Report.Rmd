@@ -1,0 +1,257 @@
+---
+title: "MA678 Final Report"
+author: "Huifei Xu"
+date: "12/4/2022"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE)
+```
+
+```{r,echo = FALSE}
+# Environment
+library(gridExtra)
+library(readr)
+library(dplyr)
+library(lme4)
+library(Matrix)
+library(ggplot2)
+
+```
+
+```{r,echo = FALSE}
+# Import dataset
+car_raw <- read_csv("Car_sales.csv")
+
+```
+
+```{r,echo = FALSE}
+# data Clean
+car = select(car_raw, -4, -15:-16)
+car <- na.omit(car)
+car$Manufacturer <- as.factor(car$Manufacturer)
+car$Model <- as.factor(car$Model)
+car$Vehicle_type <- as.factor(car$Vehicle_type)
+car_numeric <- select(car, -4, -1:-2)
+```
+
+# Abstract
+
+This report aims to examine the relationship between car sales and the economic attributes and traits of cars of interest to consumers or which factors primarily influence consumers' car purchase choices. To achieve the purpose of this study, I designed and built a multi-level model based on different major automobile brands or specific models as categories, and with corresponding exploratory data analysis to figure out the factors that can have a significant impact on consumers' choice of car purchase.
+
+# Introduction
+
+## Background
+
+The automobile, the only high-tech product in the world today with tens of thousands of parts, tens of millions of annual production, and hundreds of millions of ownership, has become one of the most important modes of human transportation since its birth in 1886. In 2007, there were 800 million cars or light trucks on the road, consuming 9.8 trillion liters of fuel annually. It can be considered that cars, which can carry several people at the same time depending on the specific model, are a good choice for family travel. The overall structure of different cars may be roughly the same, but the use and manufacturing details may vary significantly from one brand of car product to another or from one model to another under the same brand. For the general public, there are several factors that may be decisive in determining exactly which model they purchase, it may be fuel efficiency, car price, motor power, etc. The purpose of this report is to examine which factors are most influential when it comes to consumer choice in purchasing a car.
+
+Throughout the ages, taking into account the interaction of various factors and the development of the times, the car brand is still the main factor affecting consumers' choice of car. A comprehensive consideration of all factors, whether from the vehicle's cost performance, price and market performance, the brand factor is an important reason for its impact on consumers to choose a car. As a result, this report will use either the manufacturer's brand of the car or a specific special model as the categorical level to conduct an in-depth analysis to investigate the the physical attributes or economic attributes of the model itself will have an impact on its sales for different car brands.
+
+## Data Summary
+
+The data set i fould on Kaggle is 'Car sales'(URL:<https://www.kaggle.com/datasets/gagandeep16/car-sales>), published by Kaggle User GAGANBHATIA. For confidentiality reasons, the exact year of provenance of the sales data is not included, but it does not affect our study of the relationship between factors and sales. A csv file was provided which includes 16 columns of variables with 157 rows of data. Amount the variables, 3 of them are categorical variables which refers to bands and models, and 13 numeric variables covers both physical and economic/energy attributes of the car. This report is only concerned with some of these relatively representative and important variables. In order to make the model concise, some of them will be removed in the data cleaning section and will not be shown in the summary table. The table of columns with brief explanation is listed below:
+
+| Column Names       | Explanation                                                                        |
+|--------------------------|----------------------------------------------|
+| Manufacturer       | Name of the car manufacturer                                                       |
+| Model              | Name of the specific model of the car                                              |
+| Sales_in_thousands | Sales of cars, in thousands                                                        |
+| Vehicle_type       | Passenger-carrying properties of automobiles                                       |
+| Price_in_thousands | The selling price of the car, in thousands                                         |
+| Engine_size        | The total volume of the cylinders in the engine                                    |
+| Horsepower         | The power an engine produces                                                       |
+| Wheelbase          | The distance between the centres of the front and rear wheels                      |
+| Width              | Vehicle width measurement                                                          |
+| Length             | Vehicle Length measurement                                                         |
+| Curb_weight        | The weight of the vehicle including a full tank of fuel and all standard equipment |
+| Fuel_capacity      | The amount of fuel that a vehicles fuel tank can hold                              |
+| Fuel_efficiency    | The distance a motor vehicle can travel on a single gallon of gas                  |
+
+# Method
+
+## Exploratory Data Analysis
+
+Among all the twelve variables, it is very important to find out which of them have an impact on the sales of the car. The next series of eda analysis in this report is designed for this purpose. Among these variables, the price of the car is the one that we must pay attention to because it is the most intuitive data for car buyers, so I use the following graph to analyze the relationship between price and sales.
+
+```{r,fig.cap= "Relationship between Car Sales and Car Prices",fig.height=5,fig.width=7,echo = FALSE}
+
+p1 <- ggplot(data = car) + 
+  aes(x = Price_in_thousands, y = log(Sales_in_thousands)) + 
+  geom_point(aes(color = Manufacturer), size = .6) + 
+  geom_smooth(aes(color = Manufacturer), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "(b) Sales vs Price", x = "Price_in_thousands", y = "log(Sales_in_thousands)")
+
+p2 <- ggplot(data = car) + 
+  aes(x = Price_in_thousands, y = log(Sales_in_thousands)) + 
+  geom_point(aes(color = Vehicle_type), size = .6) + 
+  geom_smooth(aes(color = Vehicle_type), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "(a) Sales vs Price", x = "Price_in_thousands", y = "log(Sales_in_thousands)")
+
+grid.arrange(p2, p1, nrow = 2)
+```
+
+The relationship between car sales and price is well explained in Figure 1. Figure a shows the type of car as groups, while Figure b shows the brand of the car as groups. We can clearly see that both different types of cars illustrate that price is inversely proportional to sales. For car brands, the vast majority of brands maintain this same trend.
+
+To show the correlation between the factors in car sales, we would like to introduce two types of Correlograms in order to better understand the connection between internal and external factors. In order to achieve wholeness and continuity of the chart, only numeric types of data have been chosen in the following correlation charts.
+
+```{r,fig.cap= "correlation visualization",echo = FALSE}
+corrplot2 <- function(data,
+                      method = "pearson",
+                      sig.level = 0.05,
+                      order = "original",
+                      diag = FALSE,
+                      type = "upper",
+                      tl.srt = 90,
+                      number.font = 1,
+                      number.cex = 1,
+                      mar = c(0, 0, 0, 0)) {
+  library(corrplot)
+  data_incomplete <- data
+  data <- data[complete.cases(data), ]
+  mat <- cor(data, method = method)
+  cor.mtest <- function(mat, method) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat <- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        tmp <- cor.test(mat[, i], mat[, j], method = method)
+        p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+      }
+    }
+    colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+    p.mat
+  }
+  p.mat <- cor.mtest(data, method = method)
+  col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+  corrplot(mat,
+    method = "color", col = col(200), number.font = number.font,
+    mar = mar, number.cex = number.cex,
+    type = type, order = order,
+    addCoef.col = "black", # add correlation coefficient
+    tl.col = "black", tl.srt = tl.srt, # rotation of text labels
+    # combine with significance level
+    p.mat = p.mat, sig.level = sig.level, insig = "blank",
+    # hide correlation coefficients on the diagonal
+    diag = diag
+  )
+}
+
+corrplot2(
+  data = car_numeric,
+  method = "pearson",
+  sig.level = 0.05,
+  order = "original",
+  diag = FALSE,
+  type = "upper",
+  tl.srt = 75
+)
+```
+
+The correlogram shows correlation coefficients for all pairs of variables (with more intense colors for more extreme correlations), and correlations not significantly different from 0 are represented by a white box.
+
+```{r,fig.cap= "more correlation visualization",fig.height=8,fig.width=8,echo = FALSE}
+library(GGally)
+ggpairs(car[, c("Sales_in_thousands","Price_in_thousands", "Engine_size", "Horsepower","Length","Wheelbase","Width","Curb_weight","Fuel_capacity","Fuel_efficiency")])
+```
+
+The plot above combines correlation coefficients, correlation tests (via the asterisks next to the coefficients2) and scatter plots for all possible pairs of variables present in a data set.
+
+\newpage
+
+## Model Fitting
+
+From the previous EDAs, we can tell the type of car has slight influence on Car sales (which means whether the car is 'passenger' or 'car'). As a result, we will ignore this variable for the multilevel model and using 'Manufacturer' solely as our distinct groups. the rest of variable will be included in the model and settled to have a significance level of 0.05:
+
+```{r}
+model <- lmer(Sales_in_thousands ~ Price_in_thousands +  Engine_size + Horsepower
+            +  Length + Wheelbase + Width + Curb_weight + Fuel_capacity + Fuel_efficiency 
+            + (1 | Manufacturer) 
+            , data = car)
+```
+
+The fiexed effect is showed below:
+
+|                    |  Estimate  | Std. Error | t value |
+|:------------------:|:----------:|:----------:|:-------:|
+|    (Intercept)     | -293.85525 | 147.63038  | -1.990  |
+| Price_in_thousands |  -0.51768  |  0.71125   | -0.728  |
+|     Horsepower     |  -0.43091  |  0.22895   | -1.882  |
+|    Engine_size     |  28.30864  |  11.48777  |  2.464  |
+|       Length       |  -0.22250  |  0.72821   |  0.306  |
+|     Wheelbase      |  5.10765   |  1.25094   |  4.083  |
+|       Width        |  0.02709   |  2.33548   |  0.012  |
+|    Curb_weight     | -35.29385  |  19.32962  | -1.826  |
+|   Fuel_capacity    |  -1.79721  |  2.49386   | -0.721  |
+|  Fuel_efficiency   |  -0.27507  |  2.18489   | -0.126  |
+
+The head pf random effect towards diverse car bands will also be shown below, a full table can be found under Appendix:
+
+```{r,echo = FALSE}
+head(ranef(model)$Manufacturer)
+```
+
+# Result
+
+As the result above, I am able to get the following formula of fixed effect:
+
+$$
+\begin{aligned}
+Sales_in_thousands=-293.85525-0.51768*Price_in_thousands-0.43091*Horsepower\\+28.30864*Engine_size
+-0.22250*Length+0.02709*Width\\-35.29385*Curb_weight-1.79721*Fuel_capacity-0.27507*Fuel_efficiency
+\end{aligned}
+$$
+
+By analyzing the fixed affect formula, we can tell that there are both positive and negative factors that may contribute to the sales of a car.The positive factors are Engine_size and Width, the rest of the favors are all negative. It indicates that cars with less price and basic performance ones are more favored by the car buyers. Also, it is interesting to see fuel statistics have negative impact on Car sales, which is quite different from what i expected before having the model results.
+
+Move on to the random effect, It is very interesting to see some Manufacturers have quite different coefficient, especially between affordable car brands such as Honda Ford versus relatively luxurious car brands such as BMW and Acura.The overall results shows a clear effect of the the impact of the strong influence of car brands on car sales. For example, the Honda has a significant higher intercept (77) than the average , while BMW on the other side has negative intercept value.
+
+# Discussion
+
+This report explains the various types of factors, physical and economic, grouped with the corresponding sales of cars. Among them, we grouped the cars according to their manufacturers, and we can say that by analyzing the results of the EDA and multilevel models, we obtained roughly similar results to those previously estimated, corroborating our conjectures.We can clearly see that small, cheap and affordable models are more favored by consumers, while performance cars, despite the predominance of sporting attributes, but also clearly raise the price of the car, and therefore did not get too high sales.
+
+There is limitation for this report. One of the biggest concern for this research is that we did not include too much for the omitted variable bias.We did not go into the specific relationships, but the existence of interrelationships among the variables is predictable. One possible correlation is that the car length and width may have been designed in certain proportions. There is also the fact that better motors and more power tend to represent higher prices.
+
+# Ciatation
+
+[1] Correlation coefficient and correlation test in R; Antoine Soetewey; 2020-05-28
+
+\newpage
+
+# Appendix
+
+## More EDA
+
+```{r,echo = FALSE}
+plot(model, n.sims = 100, stat = 'median', sd = TRUE)
+```
+
+
+```{r,echo = FALSE}
+ggplot(data = car) + 
+  aes(x = Fuel_efficiency, y = log(Sales_in_thousands)) + 
+  geom_point(aes(color = Manufacturer), size = .6) + 
+  geom_smooth(aes(color = Manufacturer), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+```{r,echo = FALSE}
+ggplot(data = car) + 
+  aes(x = Horsepower, y = log(Sales_in_thousands)) + 
+  geom_point(aes(color = Manufacturer), size = .6) + 
+  geom_smooth(aes(color = Manufacturer), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+## model summary
+
+```{r,echo = FALSE}
+model
+coef(model)
+summary(model)
+anova(model)
+```
