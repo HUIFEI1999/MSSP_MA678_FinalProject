@@ -69,15 +69,23 @@ The data set i fould on Kaggle is 'Car sales'(URL:<https://www.kaggle.com/datase
 ## Test
 
 ```{r}
+remove.package("rlang")
+```
+
+
+```{r}
 library(readr)
 library(dplyr)
+library(lme4)
+library(Matrix)
+library(ggplot2)
 ```
 
 ```{r}
 
-car_row <- read_csv("Car_sales.csv")
+car_raw <- read_csv("Car_sales.csv")
 
-car = select(car_row, -4, -15:-16)
+car = select(car_raw, -4, -15:-16)
 car <- na.omit(car)
 
 ```
@@ -89,16 +97,129 @@ car <- na.omit(car)
 car$Manufacturer <- as.factor(car$Manufacturer)
 car$Model <- as.factor(car$Model)
 car$Vehicle_type <- as.factor(car$Vehicle_type)
+
+car_numeric <- select(car, -4, -1:-2)
 ```
 
 ```{r}
 
-library(lme4)
-library(Matrix)
+
 fit1 <- lmer(Sales_in_thousands ~ Price_in_thousands +  + (1 | Manufacturer),data = car)
 fit1
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#p1
+
+```{r}
+ggplot(data = car) + 
+  aes(x = Price_in_thousands, y = log(Sales_in_thousands)) + 
+  geom_point(aes(color = Manufacturer), size = .6) + 
+  geom_smooth(aes(color = Manufacturer), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "(a) Salary vs Points", x = "log(average points)", y = "log(Salary)")
+```
+
+
+points_by_position1 <- ggplot(data = NBA_data) + 
+  aes(x = log(Points + 1), y = log(Salary)) + 
+  geom_point(aes(color = Position1), size = .6) + 
+  geom_smooth(aes(color = Position1), method = "lm", se = FALSE, formula = 'y ~ x') + 
+  labs(title = "(b) Salary vs Points", x = "log(average points)", y = "log(Salary)") 
+grid.arrange(points_by_teams, points_by_position1, ncol = 2)
+
+
+
+
+```{r}
+corrplot2 <- function(data,
+                      method = "pearson",
+                      sig.level = 0.05,
+                      order = "original",
+                      diag = FALSE,
+                      type = "upper",
+                      tl.srt = 90,
+                      number.font = 1,
+                      number.cex = 1,
+                      mar = c(0, 0, 0, 0)) {
+  library(corrplot)
+  data_incomplete <- data
+  data <- data[complete.cases(data), ]
+  mat <- cor(data, method = method)
+  cor.mtest <- function(mat, method) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat <- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        tmp <- cor.test(mat[, i], mat[, j], method = method)
+        p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+      }
+    }
+    colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+    p.mat
+  }
+  p.mat <- cor.mtest(data, method = method)
+  col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+  corrplot(mat,
+    method = "color", col = col(200), number.font = number.font,
+    mar = mar, number.cex = number.cex,
+    type = type, order = order,
+    addCoef.col = "black", # add correlation coefficient
+    tl.col = "black", tl.srt = tl.srt, # rotation of text labels
+    # combine with significance level
+    p.mat = p.mat, sig.level = sig.level, insig = "blank",
+    # hide correlation coefficients on the diagonal
+    diag = diag
+  )
+}
+
+```
+
+```{r}
+corrplot2(
+  data = car_numeric,
+  method = "pearson",
+  sig.level = 0.05,
+  order = "original",
+  diag = FALSE,
+  type = "upper",
+  tl.srt = 75
+)
+```
+
+
+```{r}
+colnames(car)
+```
+
+
+
+```{r}
+library(GGally)
+
+ggpairs(dat[, c("Sales_in_thousands", "Price_in_thousands", "Fuel_efficiency")])
+```
+
+
+
+
+
+
 ```{r}
 coef(fit1)
 summary(fit1)
